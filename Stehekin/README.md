@@ -2,7 +2,9 @@
 
 ## Team Members
 - Mary Orrand
-- [Add other team members here]
+- Colin Watson
+- Ellie Barkyoumb
+- Manmeet Ranu (Arya)
 
 ## Project Overview
 Analysis of the December 2025 atmospheric river event and resulting debris flows in Stehekin, WA. This project uses various APIs to characterize the climatic conditions and geological impacts of this extreme weather event.
@@ -39,9 +41,7 @@ Analysis of the December 2025 atmospheric river event and resulting debris flows
 ## How to Run
 1. Open `API_class.ipynb` in Jupyter or VS Code
 2. Run cells sequentially to retrieve and analyze data
-3. [Add specific instructions if needed]
 
 ## References
 - USDA Natural Resources Conservation Service - SNOTEL Data
 - National Weather Service API Documentation
-- [Add other references]
