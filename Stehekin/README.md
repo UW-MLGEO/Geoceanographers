@@ -2,9 +2,7 @@
 
 ## Team Members
 - Mary Orrand
-- Colin Watson
 - Ellie Barkyoumb
-- Manmeet Ranu (Arya)
 
 ## Project Overview
 Analysis of the December 2025 atmospheric river event and resulting debris flows in Stehekin, WA. This project uses various APIs to characterize the climatic conditions and geological impacts of this extreme weather event.
