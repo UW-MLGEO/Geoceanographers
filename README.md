@@ -8,4 +8,5 @@ Class project and assignments are in respective folders, each with their own REA
 
 ### Folders
 Stehekin: Class assignment using APIs and characterizing rainfall events on fire-burned landslide areas
+
 Project: Class project on carbon cycle dynamics in ocean and coastal settings
