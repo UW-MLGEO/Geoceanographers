@@ -1,0 +1,279 @@
+%% ============================================================
+%% GeOceanographers - pCO2 / SST Slides
+%% ============================================================
+%%
+%% HOW TO USE THIS:
+%%   1. Open your Overleaf project
+%%   2. Upload the plot images you want to use (see notes below)
+%%   3. Copy-paste the \begin{frame}...\end{frame} blocks below
+%%      into main.tex wherever you want them to appear
+%%   4. Hit "Recompile" to see the result
+%%
+%% IMAGES TO UPLOAD TO OVERLEAF (from GeOceanProject/plots/):
+%%   - presentation_sst_vs_pco2_scatter.png   (Slide 3 - merged data)
+%%   - presentation_records_per_location.png   (Slide 2 - data sources)
+%%   - 05_pco2_data_availability_timeline.png  (Slide 4 - training data)
+%%   - 04_geographic_correlation_analysis.png  (Slide 7 - next steps)
+%%   (Buoy Locations.png is already in Overleaf for Slide 1)
+%%   (or any other plots you prefer — just change the filename)
+%%
+%% If you don't have an image ready, replace the filename with
+%% TemporaryImage.jpg (which is already in your Overleaf project)
+%% ============================================================
+
+
+%% --- SLIDE 1: The Problem ---
+
+\begin{frame}{The Problem: Predicting Ocean \pce{CO2}}
+    \begin{columns}
+        \column{0.5\textwidth}
+        \textbf{Why this matters:}
+        \begin{itemize}
+            \item The ocean absorbs $\sim$25\% of human \pce{CO2} emissions
+            \item Rising ocean \pce{CO2} drives acidification, threatening marine ecosystems
+            \item We need global p\pce{CO2} maps to track carbon uptake --- but buoys only cover a few points
+        \end{itemize}
+
+        \column{0.5\textwidth}
+        \begin{itemize}
+            \item \textbf{Goal:} Predict ocean surface p\pce{CO2} using satellite SST
+            \item Buoys measure p\pce{CO2} directly --- but only at discrete locations
+            \item Satellites measure SST everywhere --- but can't see \pce{CO2}
+            \item \textbf{Idea:} Learn the SST $\rightarrow$ p\pce{CO2} relationship at buoy sites, then predict p\pce{CO2} anywhere
+        \end{itemize}
+    \end{columns}
+\end{frame}
+
+
+%% --- SLIDE 2: Our Data Sources ---
+
+\begin{frame}{Our Data Sources}
+    \begin{columns}[T]
+        \column{0.5\textwidth}
+        \vspace{0pt}
+        %% Upload presentation_records_per_location.png to Overleaf
+        \centering
+        \includegraphics[width=0.78\textwidth]
+        {presentation_records_per_location.png}
+
+        \vspace{0.05cm}
+
+        %% Upload ERDDAP SST.png to Overleaf
+        \includegraphics[width=0.78\textwidth]
+        {Buoy Locations.png}
+
+        \column{0.5\textwidth}
+        \vspace{0pt}
+        \footnotesize
+        \textbf{What we have:}
+        \begin{itemize}\setlength{\itemsep}{2pt}
+            \item \textbf{NOAA Buoy pCO2} (OCADS)
+            \begin{itemize}\setlength{\itemsep}{1pt}
+                \item 7 coastal sites, 26,000+ records
+            \end{itemize}
+            \item \textbf{Satellite SST} (JPL MUR via ERDDAP)
+            \begin{itemize}\setlength{\itemsep}{1pt}
+                \item $\sim$4.6 km resolution, daily
+                \item 61,500 records (2015--2025)
+                \item Downloaded using a $\pm 1^\circ$ bounding box around each buoy
+            \end{itemize}
+        \end{itemize}
+        \vspace{0.1cm}
+        \textbf{Still needed:} Satellite Chl-a (MODIS)
+    \end{columns}
+\end{frame}
+
+
+%% --- SLIDE 3: Merged Training Data ---
+
+\begin{frame}{Merged Training Data: Satellite SST vs.\ Buoy pCO2}
+    \begin{columns}[T]
+        \column{0.55\textwidth}
+        \vspace{0pt}
+        \centering
+        %% Upload presentation_sst_vs_pco2_scatter.png to Overleaf
+        \includegraphics[width=\textwidth]
+        {presentation_sst_vs_pco2_scatter.png}
+
+        \column{0.45\textwidth}
+        \vspace{0pt}
+        \footnotesize
+        \textbf{How we built this:}
+        \begin{enumerate}\setlength{\itemsep}{1pt}
+            \item Used bounding boxes (from Slide 2) to download SST near each buoy
+            \item Cleaned both datasets
+            \item Averaged grid cells $\rightarrow$ one SST/day/site
+            \item Matched to buoy pCO2 by date \& location
+        \end{enumerate}
+        \vspace{0.1cm}
+        Each dot = one day where box-averaged satellite SST was paired with a buoy pCO2 reading.
+        Only real measurements --- no gap-filling.
+        \vspace{0.1cm}
+
+        \textbf{Key:} The relationship the model will learn.
+    \end{columns}
+\end{frame}
+
+
+%% --- SLIDE 4: Spatial Matching Discussion ---
+
+\begin{frame}{Spatial Matching: How Big Is Our Bounding Box?}
+
+    %% Comparison table at top
+    \begin{center}
+    \small
+    \begin{tabular}{l l l}
+        \textbf{Analysis Type} & \textbf{Typical Box Size} & \textbf{Use Case} \\
+        \hline
+        Satellite--buoy validation & $\sim$25 km radius & Point matching \\
+        Regional coastal studies & $0.1^\circ$--$0.25^\circ$ ($\sim$10--25 km) & Shelf/upwelling zones \\
+        Global pCO2 products (SOCAT) & $1^\circ \times 1^\circ$ ($\sim$110 km) & Monthly gridded maps \\
+        \textbf{Our approach} & $\mathbf{2^\circ \times 2^\circ}$ \textbf{($\sim$220 km)} & \textbf{Exploratory first pass} \\
+    \end{tabular}
+    \end{center}
+
+    \vspace{0.3cm}
+    \hrule
+    \vspace{0.3cm}
+
+    \small
+    \textbf{Our situation:} Most buoys are near coastlines --- a 220 km box can span across shore, upwelling zones, or different water masses, potentially diluting the local SST signal.
+
+    \vspace{0.2cm}
+    \textbf{Next steps:}
+    \begin{itemize}
+        \item Test smaller boxes ($\pm 0.25^\circ$ or $\pm 0.1^\circ$) and compare model accuracy
+        \item Use different box sizes for coastal vs.\ open-ocean sites
+    \end{itemize}
+
+\end{frame}
+
+
+%% --- SLIDE 5: Training Data Available ---
+
+\begin{frame}{Continuous pCO2 Data for Training}
+
+    %% TOP SECTION: table on left, bullet points on right
+    \begin{columns}[T]
+        \column{0.45\textwidth}
+        \small
+        \begin{tabular}{l r r}
+            \textbf{Location} & \textbf{Days} & \textbf{Records} \\
+            \hline
+            Southern CA & 536 & 7,903 \\
+            LA Buoy & 610 & 3,702 \\
+            First Landing & 343 & 3,916 \\
+            Greys Reef & 1,461 & 3,889 \\
+            South Pacific & 731 & 3,083 \\
+        \end{tabular}
+
+        \column{0.55\textwidth}
+        \small
+        \begin{itemize}
+            \item Only real, measured pCO2
+            \item No interpolation or gap-filling
+            \item Each record paired with satellite SST from the same date
+        \end{itemize}
+    \end{columns}
+
+    \vspace{0.3cm}
+
+    %% BOTTOM SECTION: timeline image across full width
+    \begin{center}
+        \includegraphics[width=\textwidth]
+        {05_pco2_data_availability_timeline.png}
+    \end{center}
+
+\end{frame}
+
+
+%% --- SLIDE 6: ML Model Approach ---
+
+\begin{frame}{ML Approach: Random Forest}
+    \begin{columns}
+        \column{0.5\textwidth}
+
+        %% Upload RFDiagram.png (already in Overleaf)
+        \includegraphics[width=\textwidth]
+        {RFDiagram.png}
+
+        \column{0.5\textwidth}
+        \small
+        \textbf{Why Random Forest?}
+        \begin{itemize}
+            \item Handles nonlinear relationships
+            \item Robust to outliers
+            \item Reveals feature importance
+        \end{itemize}
+        \vspace{0.2cm}
+        \textbf{Our setup:}
+        \begin{itemize}
+            \item \textbf{Inputs:} SST, lat, lon, date
+            \item \textbf{Target:} measured pCO2
+            \item \textbf{Split:} 80/20 train/test
+            \item \textbf{Metrics:} RMSE, R$^2$
+        \end{itemize}
+    \end{columns}
+\end{frame}
+
+
+%% --- SLIDE 7: Chl-a - Planned Addition ---
+
+\begin{frame}{Chlorophyll-a: Next Data Source}
+    \begin{columns}
+        \column{0.5\textwidth}
+
+        %% Upload CarbonCycle.png (already in Overleaf)
+        \includegraphics[width=\textwidth]
+        {CarbonCycle.png}
+
+        \column{0.5\textwidth}
+        \small
+        \textbf{Why Chl-a matters:}
+        \begin{itemize}
+            \item Indicates phytoplankton abundance
+            \item Phytoplankton absorb CO2
+            \item More phytoplankton $\rightarrow$ lower pCO2
+            \item Should improve model accuracy
+        \end{itemize}
+        \vspace{0.2cm}
+        \textbf{Plan:}
+        \begin{itemize}
+            \item NASA MODIS, $\sim$4 km resolution
+            \item Match to buoy locations and dates
+            \item Add as input feature with SST
+        \end{itemize}
+    \end{columns}
+\end{frame}
+
+
+%% --- SLIDE 8: What's Next ---
+
+\begin{frame}{Next Steps}
+    \begin{enumerate}
+        \item Obtain Chl-a satellite data
+        \item Pick training location(s)
+        \item Train Random Forest model
+        \item Evaluate: predicted vs.\ actual pCO2
+    \end{enumerate}
+    \vspace{0.5cm}
+    \textbf{End goal:}\\
+    Predict pCO2 anywhere satellites measure SST and Chl-a
+\end{frame}
+
+
+%% ============================================================
+%% NOTES:
+%%
+%% - If \pce{} doesn't work, your teammate may be using \ce{}
+%%   from the mhchem package instead. Try replacing \pce with \ce
+%%
+%% - If colors don't work, make sure this line is in the preamble
+%%   (the part before \begin{document}):
+%%   \usepackage{xcolor}
+%%
+%% - To change an image, just swap the filename in
+%%   \includegraphics[width=\textwidth]{FILENAME_HERE}
+%%
+%% - You can reorder these frames however you want
+%% ============================================================

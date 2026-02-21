@@ -1,0 +1,178 @@
+GeOceanographers - Presentation Notes (Feb 20, 2026)
+=====================================================
+2-3 slides for class: explain our project simply
+
+
+SLIDE 1: THE PROBLEM
+---------------------------------
+
+The big idea (say this in plain language):
+
+  "We want to predict CO2 levels in the ocean using satellite temperature
+   data. Buoys measure CO2 directly, but there are only 7 of them. Satellites
+   measure temperature everywhere but can't see CO2. So we're asking:
+   can we learn the relationship between temperature and CO2 at buoy sites,
+   then use that to predict CO2 anywhere a satellite can see?"
+
+Why it matters:
+  - pCO2 (partial pressure of CO2) tells us how much carbon the ocean
+    is absorbing — important for understanding climate change
+  - But we can only measure it at a handful of buoy locations
+  - Satellites give us SST (sea surface temperature) across the entire ocean
+  - If SST can predict pCO2, we can estimate carbon uptake everywhere
+
+Our two data sources:
+
+  BUOYS (the "answer key")                SATELLITES (the "predictor")
+  - 7 NOAA sites across US waters        - JPL MUR SST via NOAA ERDDAP
+  - Directly measure pCO2 at surface     - ~4.6 km resolution, daily
+  - 26,000+ records, 2013-2025           - 61,500 records, 2015-2025
+  - This is our TARGET variable           - This is our INPUT feature
+    (what we want to predict)               (what we train the model on)
+
+  Locations: Southern CA, La Push (WA), Coastal Louisiana,
+  Grays Reef (GA), First Landing (VA), South Pacific, SE Bering Sea
+
+
+SLIDE 2: WHAT WE'VE DONE SO FAR
+---------------------------------
+
+The key idea (say this):
+
+  "At buoy locations, we have BOTH satellite SST and buoy-measured pCO2
+   on the same dates. So we paired them up to create training data:
+   'on this day, at this spot, the satellite saw this temperature,
+   and the buoy measured this CO2 level.' Those pairs are what we
+   train the model on."
+
+What we did, step by step:
+
+  1. DEFINED BOUNDING BOXES to download satellite data
+     - BEFORE any cleaning or merging, we decided what satellite
+       data to actually pull from the ERDDAP API
+     - For each buoy, we created a ±1° lat/lon box around its
+       known coordinates (about 220 km × 220 km of ocean)
+     - Used those boxes as the spatial bounds in ERDDAP queries
+       to download only satellite SST near our buoy sites
+     - This was the very first step — it determined what
+       satellite data we had to work with going forward
+
+  2. CLEANED both datasets separately
+     - Removed bad values (-999 null codes), standardized dates
+     - Satellite: 61,510 rows  |  Buoy: 26,000+ rows
+
+  3. SPATIALLY AVERAGED the satellite data
+     - For each day at each buoy location, averaged all satellite
+       grid cells within the bounding box into one SST value
+     - This smooths out small-scale noise and gives a more
+       reliable SST estimate than a single pixel would
+
+  4. MATCHED satellite SST to buoy pCO2 by date and location
+     - Paired the box-averaged satellite SST with the buoy's
+       pCO2 reading from the same date
+     - This creates our training pairs: SST (input) → pCO2 (target)
+
+  5. IDENTIFIED continuous measurement windows
+     - Buoys don't run 24/7 — there are gaps in the pCO2 data
+     - We found the time windows where each buoy had consistent,
+       real measurements (no gaps > 30 days)
+     - We only want to train on REAL data, not fill in gaps ourselves
+
+  Best continuous data windows we found:
+     Southern CA:   536 days,  7,903 records  (best quality)
+     LA Buoy:       610 days,  3,702 records
+     First Landing: 343 days,  3,916 records
+     Greys Reef:    1,461 days, 3,889 records
+     South Pacific: 731 days,  3,083 records
+     La Push & Bering Sea: shorter, more fragmented
+
+Why we train on satellite SST (not buoy SST):
+  - The model will eventually predict using satellite data as input
+  - So it should learn from satellite measurements specifically
+  - Satellite and buoy SST are similar but not identical (different
+    instruments), so training on satellite SST avoids a mismatch
+
+
+SLIDE 3 (or 4): BOUNDING BOX & SPATIAL MATCHING
+---------------------------------
+
+The key idea (say this):
+
+  "When we pull satellite SST for each buoy, we don't grab just
+   one pixel. We define a bounding box — a square area around the
+   buoy — and average all the satellite measurements in that box
+   into one temperature value per day."
+
+What the audience should understand:
+
+  - Our box is ±1° in every direction, which is about 220 km × 220 km
+  - That's on the larger side for this kind of work
+  - For comparison:
+      * Satellite validation studies typically use ~25 km
+      * Regional coastal studies use ~10-25 km
+      * Global pCO2 gridded products (SOCAT) use ~110 km (1° × 1°)
+      * Ours is 220 km (2° × 2°)
+
+Why it matters:
+
+  - Most of our buoys sit near coastlines
+  - A 220 km box near a coast can easily reach across shore,
+    upwelling zones, or completely different water masses
+  - That means the averaged SST might not reflect what the buoy
+    is actually experiencing — diluting the signal
+  - Open-ocean sites (like South Pacific) are fine with a big box
+    because SST is pretty uniform out there
+
+What we plan to do about it:
+
+  - Test smaller boxes (±0.25° or ±0.1°) and compare model accuracy
+  - Possibly use different box sizes for coastal vs. open-ocean sites
+  - This is a natural next step for improving model performance
+
+
+SLIDE 4 (or 5): WHAT'S NEXT
+---------------------------------
+
+Where we are now (say this):
+
+  "We have our training data paired and cleaned. The next step is
+   to actually train a model and see how well satellite temperature
+   can predict ocean CO2."
+
+Decisions we need to make:
+
+  1. Which location(s) to start with?
+     - Start simple: one site with the best data (Southern CA)
+     - Then expand to multiple sites to see if the model generalizes
+
+  2. Which ML model to try first?
+     - Random Forest is a good starting point for environmental data
+     - Later: could try neural networks, XGBoost, etc.
+
+  3. How do we know if it works?
+     - Split data: 80% for training, 20% for testing
+     - Compare predicted pCO2 vs actual measured pCO2
+     - Metrics: R-squared (how much variance explained),
+       RMSE (how far off on average)
+
+The end goal:
+
+  "If the model works, we could feed it satellite SST from anywhere
+   in the ocean — not just buoy locations — and get a pCO2 prediction.
+   That would let us estimate ocean carbon uptake across huge areas
+   where we currently have no direct measurements."
+
+
+QUICK STATS (for Q&A)
+---------------------------
+  Satellite records:        61,510
+  Buoy records:             26,000+
+  Buoy locations:           7
+  Best training window:     7,903 records (Southern CA)
+  Training approach:        Only real measured pCO2 (no interpolation)
+  Time span:                2013-2025
+  Satellite resolution:     ~4.6 km
+  Target variable:          pCO2 (ocean surface CO2, in µatm)
+  Main input feature:       Satellite SST (°C)
+  Model learns:             SST → pCO2 at buoy sites
+  Model predicts:           pCO2 anywhere satellites measure SST
